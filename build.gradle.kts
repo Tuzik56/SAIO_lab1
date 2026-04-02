@@ -26,12 +26,11 @@ tasks.withType<JavaCompile> {
 }
 
 application {
-    mainModule.set("com.example.saio_lab1")
-    mainClass.set("com.example.saio_lab1.HelloApplication")
+    mainClass.set("com.example.saio_lab1.app.FXMain")
 }
 
 javafx {
-    version = "21.0.6"
+    version = "17.0.10"
     modules = listOf("javafx.controls", "javafx.fxml")
 }
 
