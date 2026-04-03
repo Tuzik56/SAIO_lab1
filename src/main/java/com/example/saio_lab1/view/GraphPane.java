@@ -5,6 +5,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import com.example.saio_lab1.model.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GraphPane extends Pane {
@@ -33,50 +34,80 @@ public class GraphPane extends Pane {
         return offsetY - y * scale;
     }
 
+    private double getMinX() {
+        return (0 - offsetX) / scale;
+    }
+
+    private double getMaxX() {
+        return (canvas.getWidth() - offsetX) / scale;
+    }
+
+    private double getMinY() {
+        return (offsetY - canvas.getHeight()) / scale;
+    }
+
+    private double getMaxY() {
+        return offsetY / scale;
+    }
+
     public void drawGrid() {
 
         gc.setStroke(Color.LIGHTGRAY);
-        gc.setLineWidth(1);
 
-        double maxCoord = 20; // сколько рисуем в обе стороны
+        double minX = getMinX();
+        double maxX = getMaxX();
+        double minY = getMinY();
+        double maxY = getMaxY();
 
-        for (double i = -maxCoord; i <= maxCoord; i += gridStep) {
+        // округляем к шагу сетки
+        double startX = Math.floor(minX / gridStep) * gridStep;
+        double startY = Math.floor(minY / gridStep) * gridStep;
 
-            double x = toScreenX(i);
-            double y = toScreenY(i);
+        for (double x = startX; x <= maxX; x += gridStep) {
+            double sx = toScreenX(x);
+            gc.strokeLine(sx, 0, sx, canvas.getHeight());
+        }
 
-            // вертикальные линии
-            gc.strokeLine(x, 0, x, canvas.getHeight());
-
-            // горизонтальные линии
-            gc.strokeLine(0, y, canvas.getWidth(), y);
+        for (double y = startY; y <= maxY; y += gridStep) {
+            double sy = toScreenY(y);
+            gc.strokeLine(0, sy, canvas.getWidth(), sy);
         }
 
         // оси
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(2);
 
-        gc.strokeLine(0, offsetY, canvas.getWidth(), offsetY); // X
-        gc.strokeLine(offsetX, 0, offsetX, canvas.getHeight()); // Y
+        gc.strokeLine(0, offsetY, canvas.getWidth(), offsetY);
+        gc.strokeLine(offsetX, 0, offsetX, canvas.getHeight());
     }
 
     public void drawConstraints(List<Constraint> constraints) {
 
         gc.setStroke(Color.BLUE);
-        gc.setLineWidth(1.5);
+
+        double minX = getMinX();
+        double maxX = getMaxX();
 
         for (Constraint c : constraints) {
 
-            double x1 = -10;
-            double y1 = (c.c - c.a * x1) / c.b;
+            if (Math.abs(c.b) > 1e-6) {
+                // обычная линия
+                double y1 = (c.c - c.a * minX) / c.b;
+                double y2 = (c.c - c.a * maxX) / c.b;
 
-            double x2 = 10;
-            double y2 = (c.c - c.a * x2) / c.b;
+                gc.strokeLine(
+                        toScreenX(minX), toScreenY(y1),
+                        toScreenX(maxX), toScreenY(y2)
+                );
+            } else {
+                // вертикальная линия (ВАЖНО!)
+                double x = c.c / c.a;
 
-            gc.strokeLine(
-                    toScreenX(x1), toScreenY(y1),
-                    toScreenX(x2), toScreenY(y2)
-            );
+                gc.strokeLine(
+                        toScreenX(x), 0,
+                        toScreenX(x), canvas.getHeight()
+                );
+            }
         }
     }
 
@@ -128,7 +159,9 @@ public class GraphPane extends Pane {
 
     public void drawRegion(List<Point> points) {
 
-        points = sortPoints(points);
+        if (points == null || points.size() < 3) return;
+
+        points = sortPoints(new ArrayList<>(points)); // копия!
 
         double[] x = new double[points.size()];
         double[] y = new double[points.size()];
@@ -138,7 +171,7 @@ public class GraphPane extends Pane {
             y[i] = toScreenY(points.get(i).y);
         }
 
-        gc.setFill(Color.rgb(0, 0, 255, 0.2));
+        gc.setFill(Color.rgb(0, 0, 255, 0.2)); // прозрачный синий
         gc.fillPolygon(x, y, points.size());
     }
 
@@ -159,7 +192,9 @@ public class GraphPane extends Pane {
 
         drawGrid();
         drawConstraints(constraints);
-        drawRegion(feasible);
+
+        drawRegion(feasible); //
+
         drawPoints(feasible);
 
         if (optimal != null) {
