@@ -24,7 +24,7 @@ tasks.withType<JavaCompile> {
 }
 
 application {
-    mainClass.set("com.example.saio_lab1.app.FXMain")
+    mainClass.set("com.example.saio_lab1.app.Main")
 }
 
 javafx {

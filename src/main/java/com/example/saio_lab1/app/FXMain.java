@@ -31,9 +31,46 @@ public class FXMain extends Application {
 
         Scene scene = new Scene(pane, 600, 600);
 
+        scene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+
+                case PLUS:
+                case EQUALS: // часто + это Shift + =
+                    pane.setScale(pane.getScale() * 1.2);
+                    break;
+
+                case MINUS:
+                    pane.setScale(pane.getScale() / 1.2);
+                    break;
+            }
+        });
+
+        scene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+
+                case PLUS:
+                case EQUALS:
+                    pane.setScale(pane.getScale() * 1.2);
+                    break;
+
+                case MINUS:
+                    pane.setScale(pane.getScale() / 1.2);
+                    break;
+
+                case UP: // увеличить шаг сетки
+                    pane.setGridStep(pane.getGridStep() * 1.5);
+                    break;
+
+                case DOWN: // уменьшить шаг сетки
+                    pane.setGridStep(pane.getGridStep() / 1.5);
+                    break;
+            }
+        });
+
         stage.setTitle("Линейное программирование");
         stage.setScene(scene);
         stage.show();
+        pane.requestFocus();
     }
 
     public static void main(String[] args) {

@@ -13,8 +13,13 @@ public class GraphPane extends Pane {
     private GraphicsContext gc = canvas.getGraphicsContext2D();
 
     private double scale = 50; // пикселей на 1 единицу
+    private double gridStep = 1.0; // шаг сетки в координатах
     private double offsetX = 300;
     private double offsetY = 300;
+
+    private List<Constraint> constraints;
+    private List<Point> feasible;
+    private Point optimal;
 
     public GraphPane() {
         getChildren().add(canvas);
@@ -29,21 +34,30 @@ public class GraphPane extends Pane {
     }
 
     public void drawGrid() {
-        gc.setStroke(Color.LIGHTGRAY);
 
-        for (int i = -10; i <= 10; i++) {
-            gc.strokeLine(toScreenX(i), 0, toScreenX(i), 600);
-            gc.strokeLine(0, toScreenY(i), 600, toScreenY(i));
+        gc.setStroke(Color.LIGHTGRAY);
+        gc.setLineWidth(1);
+
+        double maxCoord = 20; // сколько рисуем в обе стороны
+
+        for (double i = -maxCoord; i <= maxCoord; i += gridStep) {
+
+            double x = toScreenX(i);
+            double y = toScreenY(i);
+
+            // вертикальные линии
+            gc.strokeLine(x, 0, x, canvas.getHeight());
+
+            // горизонтальные линии
+            gc.strokeLine(0, y, canvas.getWidth(), y);
         }
 
+        // оси
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(2);
 
-        // ось X
-        gc.strokeLine(0, offsetY, 600, offsetY);
-
-        // ось Y
-        gc.strokeLine(offsetX, 0, offsetX, 600);
+        gc.strokeLine(0, offsetY, canvas.getWidth(), offsetY); // X
+        gc.strokeLine(offsetX, 0, offsetX, canvas.getHeight()); // Y
     }
 
     public void drawConstraints(List<Constraint> constraints) {
@@ -133,12 +147,49 @@ public class GraphPane extends Pane {
             List<Point> feasible,
             Point optimal) {
 
+        this.constraints = constraints;
+        this.feasible = feasible;
+        this.optimal = optimal;
+
+        redraw();
+    }
+
+    private void redraw() {
         gc.clearRect(0, 0, 600, 600);
 
         drawGrid();
         drawConstraints(constraints);
         drawRegion(feasible);
         drawPoints(feasible);
-        drawOptimal(optimal);
+
+        if (optimal != null) {
+            drawOptimal(optimal);
+        }
+    }
+
+    public void setScale(double scale) {
+
+        if (scale < 10) scale = 10;
+        if (scale > 500) scale = 500;
+
+        this.scale = scale;
+        redraw();
+    }
+
+    public double getScale() {
+        return scale;
+    }
+
+    public void setGridStep(double step) {
+
+        if (step < 0.1) step = 0.1;
+        if (step > 10) step = 10;
+
+        this.gridStep = step;
+        redraw();
+    }
+
+    public double getGridStep() {
+        return gridStep;
     }
 }
